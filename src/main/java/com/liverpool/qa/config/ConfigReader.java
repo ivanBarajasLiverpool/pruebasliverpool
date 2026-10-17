@@ -30,7 +30,7 @@ public final class ConfigReader {
             }
     }
 
-    public static String get(String key) {
+    public static String get(String key, String defaultValue) {
         // 1. Si se pasa por terminal (ej. mvn test -Dbrowser.headless=true), usa ese valor.
         // 2. Si no se pasa por terminal, toma el valor de config.properties.
         return System.getProperty(key, properties.getProperty(key));
