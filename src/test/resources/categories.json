@@ -1,0 +1,12 @@
+[
+    {
+      "name": "Fallos de Validación de Negocio (Precios / Bolsa)",
+      "matchedStatuses": ["failed"],
+      "traceRegex": ".*AssertionError.*"
+    },
+    {
+      "name": "Problemas de Sincronización o Elementos No Encontrados (DOM / Red)",
+      "matchedStatuses": ["broken"],
+      "traceRegex": ".*(TimeoutException|NoSuchElementException|StaleElementReferenceException).*"
+    }
+  ]
