@@ -72,7 +72,7 @@ public final class DriverManager {
     }
 
     /**
-     * Inicializa AndroidDriver con UiAutomator2Options para Liverpool Pocket 
+     * Inicializa AndroidDriver 
      */
     public static void initMobileDriver() {
         if (driverThread.get() != null) {
@@ -106,7 +106,7 @@ public final class DriverManager {
     }
 
     /**
-     * Cierra la sesión activa y limpia el ThreadLocal para evitar fugas de memoria.
+     * Cierra la sesión activa y limpia el ThreadLocal
      */
     public static void quitDriver() {
         WebDriver driver = driverThread.get();
