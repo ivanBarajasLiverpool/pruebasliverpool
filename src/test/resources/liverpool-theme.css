@@ -1,0 +1,34 @@
+/* =========================================================
+   TEMA CORPORATIVO: EL PUERTO DE LIVERPOOL (#E10098)
+   ========================================================= */
+
+/* Barra lateral con el color institucional de Liverpool */
+.side-nav {
+    background: linear-gradient(180deg, #8a005b 0%, #4a0033 100%) !important;
+}
+
+/* Reemplazar texto de marca junto al logo por "LIVERPOOL QA" */
+.side-nav__brand-text {
+    font-size: 0 !important;
+}
+.side-nav__brand-text::after {
+    content: "LIVERPOOL QA";
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px;
+    color: #ffffff !important;
+}
+
+/* Item activo en el menú lateral con Rosa Liverpool (#E10098) */
+.side-nav__item_active,
+.side-nav__link:hover {
+    background-color: rgba(225, 0, 152, 0.35) !important;
+    border-left: 4px solid #E10098 !important;
+}
+
+/* Títulos principales y acentos en Rosa Liverpool */
+.pane__title,
+.widget__title {
+    color: #a80071 !important;
+    font-weight: 700 !important;
+}
