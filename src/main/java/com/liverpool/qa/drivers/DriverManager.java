@@ -1,0 +1,133 @@
+package com.liverpool.qa.drivers;
+
+import com.liverpool.qa.config.ConfigReader;
+import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.android.options.UiAutomator2Options;
+import org.openqa.selenium.PageLoadStrategy;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.time.Duration;
+
+public final class DriverManager {
+
+    private static final Logger log = LoggerFactory.getLogger(DriverManager.class);
+
+    // Contenedor ThreadLocal para permitir ejecución paralela 
+    private static final ThreadLocal<WebDriver> driverThread = new ThreadLocal<>();
+
+    // Constructor privado para evitar instanciación (Utility/Factory class)
+    private DriverManager() {
+    }
+
+    /**
+     * Obtiene la instancia activa del driver (Web o Mobile) para el thread actual.
+     */
+    public static WebDriver getDriver() {
+        return driverThread.get();
+    }
+
+    /**
+     * Inicializa el navegador Web (Chrome por defecto) para las pruebas de Liverpool y Banana Republic.
+     */
+    public static void initWebDriver(String browser) {
+        if (driverThread.get() != null) {
+            return;
+        }
+
+        String targetBrowser = (browser != null && !browser.isBlank())
+                ? browser.toLowerCase()
+                : ConfigReader.get("browser.name", "chrome").toLowerCase();
+
+        log.info("Inicializando WebDriver para navegador: {}", targetBrowser);
+
+        WebDriver driver = switch (targetBrowser) {
+            case "firefox" -> new FirefoxDriver();
+            case "edge" -> new EdgeDriver();
+            default -> {
+                ChromeOptions options = new ChromeOptions();
+                options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+                if (Boolean.parseBoolean(ConfigReader.get("browser.maximize", "true"))) {
+                    options.addArguments("--start-maximized");
+                }
+                if (Boolean.parseBoolean(ConfigReader.get("browser.headless", "false"))) {
+                    options.addArguments("--headless=new");
+                }
+                options.addArguments("--disable-notifications");
+                options.addArguments("--disable-popup-blocking");
+                // Reduce bloqueos básicos de detección de automatización en e-commerce
+                options.addArguments("--disable-blink-features=AutomationControlled");
+                yield new ChromeDriver(options);
+            }
+        };
+
+        // Configuración de Implicit Wait y PageLoad Timeout (vienen desde config.properties)
+        int implicitWaitSec = Integer.parseInt(ConfigReader.get("timeout.implicit.seconds", "0"));
+        int pageLoadSec = Integer.parseInt(ConfigReader.get("timeout.pageload.seconds", "30"));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(implicitWaitSec));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(pageLoadSec));
+
+        driverThread.set(driver);
+    }
+
+    /**
+     * Inicializa AndroidDriver 
+     */
+    public static void initMobileDriver() {
+        if (driverThread.get() != null) {
+            return;
+        }
+
+        log.info("Inicializando AndroidDriver (Appium UiAutomator2) para Liverpool Pocket...");
+
+        UiAutomator2Options options = new UiAutomator2Options()
+                .setPlatformName(ConfigReader.get("appium.platform.name", "Android"))
+                .setAutomationName(ConfigReader.get("appium.automation.name", "UiAutomator2"))
+                .setDeviceName(ConfigReader.get("appium.device.name", "emulator-5554"))
+                .setAppPackage(ConfigReader.get("appium.app.package", "mx.com.liverpool.shoppingapp"))
+                .setAppActivity(ConfigReader.get("appium.app.activity", "mx.com.liverpool.shoppingapp.SplashActivity"))
+                .setAppWaitActivity(ConfigReader.get("appium.app.wait.activity", "*"))
+                .setNoReset(Boolean.parseBoolean(ConfigReader.get("appium.no.reset", "true")))
+                .setAutoGrantPermissions(Boolean.parseBoolean(ConfigReader.get("appium.auto.grant.permissions", "true")))
+                .setNewCommandTimeout(Duration.ofSeconds(
+                        Integer.parseInt(ConfigReader.get("appium.new.command.timeout", "60"))
+                ));
+
+        String appiumServerUrl = ConfigReader.get("appium.server.url", "http://127.0.0.1:4723");
+
+        try {
+            AndroidDriver androidDriver = new AndroidDriver(URI.create(appiumServerUrl).toURL(), options);
+
+            int implicitWaitSec = Integer.parseInt(ConfigReader.get("timeout.implicit.seconds", "0"));
+            androidDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(implicitWaitSec));
+
+            driverThread.set(androidDriver);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("URL del servidor Appium inválida: " + appiumServerUrl, e);
+        }
+    }
+
+    /**
+     * Cierra la sesión activa y limpia el ThreadLocal
+     */
+    public static void quitDriver() {
+        WebDriver driver = driverThread.get();
+        if (driver != null) {
+            try {
+                log.info("Cerrando sesión del driver...");
+                driver.quit();
+            } catch (Exception e) {
+                log.warn("Error al cerrar el driver: {}", e.getMessage());
+            } finally {
+                driverThread.remove();
+            }
+        }
+    }
+}

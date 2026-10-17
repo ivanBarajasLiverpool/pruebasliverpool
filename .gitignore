@@ -1,0 +1,63 @@
+# ==========================================
+# Maven & Compilados de Java
+# ==========================================
+target/
+*.class
+*.jar
+*.war
+*.ear
+dependency-reduced-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# ==========================================
+# Reportes de Ejecución (TestNG & Allure)
+# ==========================================
+test-output/
+allure-results/
+allure-report/
+.allure/
+screenshots/
+
+# ==========================================
+# Logs y Volcados de Memoria
+# ==========================================
+*.log
+logs/
+hs_err_pid*
+replay_pid*
+
+# ==========================================
+# Binarios Móviles (Evitar subir APKs pesados a GitHub)
+# ==========================================
+*.apk
+*.xapk
+*.apks
+*.aab
+*.ipa
+
+# ==========================================
+# Variables sensibles locales (si usas overrides)
+# ==========================================
+.env
+config.local.properties
+
+# ==========================================
+# IDEs (VS Code)
+# ==========================================
+
+out/
+.vscode/
+.classpath
+.project
+.settings/
+
+# ==========================================
+# Archivos de Sistema Operativo (Linux / macOS / Windows)
+# ==========================================
+.DS_Store
+Thumbs.db
+*~
