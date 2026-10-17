@@ -1,4 +1,4 @@
-package main.java.com.liverpool.qa.drivers;
+package com.liverpool.qa.drivers;
 
 import com.liverpool.qa.config.ConfigReader;
 import io.appium.java_client.android.AndroidDriver;
@@ -28,7 +28,7 @@ public final class DriverManager {
     }
 
     /**
-     * Obtiene la instancia activa del driver (Web o Mobile) para el hilo actual.
+     * Obtiene la instancia activa del driver (Web o Mobile) para el thread actual.
      */
     public static WebDriver getDriver() {
         return driverThread.get();
@@ -44,7 +44,7 @@ public final class DriverManager {
 
         String targetBrowser = (browser != null && !browser.isBlank())
                 ? browser.toLowerCase()
-                : ConfigReader.get("browser", "chrome").toLowerCase();
+                : ConfigReader.get("browser.name", "chrome").toLowerCase();
 
         log.info("Inicializando WebDriver para navegador: {}", targetBrowser);
 
@@ -54,7 +54,12 @@ public final class DriverManager {
             default -> {
                 ChromeOptions options = new ChromeOptions();
                 options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
-                options.addArguments("--start-maximized");
+                if (Boolean.parseBoolean(ConfigReader.get("browser.maximize", "true"))) {
+                    options.addArguments("--start-maximized");
+                }
+                if (Boolean.parseBoolean(ConfigReader.get("browser.headless", "false"))) {
+                    options.addArguments("--headless=new");
+                }
                 options.addArguments("--disable-notifications");
                 options.addArguments("--disable-popup-blocking");
                 // Reduce bloqueos básicos de detección de automatización en e-commerce
@@ -63,10 +68,11 @@ public final class DriverManager {
             }
         };
 
-        // Configuración documentada de Implicit Wait (leída desde config.properties)
-        int implicitWaitSec = Integer.parseInt(ConfigReader.get("implicit.wait", "0"));
+        // Configuración de Implicit Wait y PageLoad Timeout (vienen desde config.properties)
+        int implicitWaitSec = Integer.parseInt(ConfigReader.get("timeout.implicit.seconds", "0"));
+        int pageLoadSec = Integer.parseInt(ConfigReader.get("timeout.pageload.seconds", "30"));
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(implicitWaitSec));
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(pageLoadSec));
 
         driverThread.set(driver);
     }
@@ -82,21 +88,24 @@ public final class DriverManager {
         log.info("Inicializando AndroidDriver (Appium UiAutomator2) para Liverpool Pocket...");
 
         UiAutomator2Options options = new UiAutomator2Options()
-                .setPlatformName("Android")
-                .setAutomationName("UiAutomator2")
-                .setDeviceName(ConfigReader.get("android.device.name", "emulator-5554"))
-                .setAppPackage(ConfigReader.get("android.app.package", "mx.com.liverpool.shoppingapp"))
-                .setAppActivity(ConfigReader.get("android.app.activity", "mx.com.liverpool.shoppingapp.splash.SplashActivity"))
-                .setNoReset(Boolean.parseBoolean(ConfigReader.get("android.no.reset", "true")))
-                .setAutoGrantPermissions(true)
-                .setNewCommandTimeout(Duration.ofSeconds(120));
+                .setPlatformName(ConfigReader.get("appium.platform.name", "Android"))
+                .setAutomationName(ConfigReader.get("appium.automation.name", "UiAutomator2"))
+                .setDeviceName(ConfigReader.get("appium.device.name", "emulator-5554"))
+                .setAppPackage(ConfigReader.get("appium.app.package", "mx.com.liverpool.shoppingapp"))
+                .setAppActivity(ConfigReader.get("appium.app.activity", "mx.com.liverpool.shoppingapp.SplashActivity"))
+                .setAppWaitActivity(ConfigReader.get("appium.app.wait.activity", "*"))
+                .setNoReset(Boolean.parseBoolean(ConfigReader.get("appium.no.reset", "true")))
+                .setAutoGrantPermissions(Boolean.parseBoolean(ConfigReader.get("appium.auto.grant.permissions", "true")))
+                .setNewCommandTimeout(Duration.ofSeconds(
+                        Integer.parseInt(ConfigReader.get("appium.new.command.timeout", "60"))
+                ));
 
         String appiumServerUrl = ConfigReader.get("appium.server.url", "http://127.0.0.1:4723");
 
         try {
             AndroidDriver androidDriver = new AndroidDriver(URI.create(appiumServerUrl).toURL(), options);
 
-            int implicitWaitSec = Integer.parseInt(ConfigReader.get("implicit.wait", "0"));
+            int implicitWaitSec = Integer.parseInt(ConfigReader.get("timeout.implicit.seconds", "0"));
             androidDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(implicitWaitSec));
 
             driverThread.set(androidDriver);

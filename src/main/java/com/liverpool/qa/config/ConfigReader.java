@@ -1,4 +1,4 @@
-package main.java.com.liverpool.qa.config;
+package com.liverpool.qa.config;
 
 import java.util.Properties;
 import java.io.InputStream;
@@ -23,17 +23,20 @@ public final class ConfigReader {
             if (input == null){
                 throw new IllegalStateException("No se encontró el archivo '" + CONFIG_FILE + "' en el classpath (src/test/resources).");
             }
-            PROPERTIES.load(inputStream);
+            PROPERTIES.load(input);
 
         } catch (Exception e) {
             throw new RuntimeException("Error al cargar el archivo de configuración: " + CONFIG_FILE, e);
             }
     }
 
-    public static String get(String key, String defaultValue) {
+    public static String get(String key) {
         // 1. Si se pasa por terminal (ej. mvn test -Dbrowser.headless=true), usa ese valor.
         // 2. Si no se pasa por terminal, toma el valor de config.properties.
-        return System.getProperty(key, properties.getProperty(key));
+        return System.getProperty(key, PROPERTIES.getProperty(key));
+    }
+    public static String get(String key, String defaultValue) {
+        return System.getProperty(key, PROPERTIES.getProperty(key, defaultValue));
     }
 
     /**

@@ -1,5 +1,6 @@
-package main.java.com.liverpool.qa.pages.mobile;
+package com.liverpool.qa.pages.mobile;
 
+import com.liverpool.qa.pages.base.BasePage;
 import io.appium.java_client.AppiumBy;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.nativekey.AndroidKey;
@@ -29,7 +30,7 @@ public abstract class BaseMobilePage extends BasePage {
     }
 
     // =========================================================================
-    // 1. SCROLL NATIVO DE ANDROID 
+    // 1. SCROLL EN ANDROID 
     // =========================================================================
 
     /**
@@ -54,6 +55,23 @@ public abstract class BaseMobilePage extends BasePage {
         scrollToText(visibleText).click();
     }
 
+    protected void swipeVertical(double startPercentY, double endPercentY) {
+        Dimension size = androidDriver.manage().window().getSize();
+        int centerX = size.width / 2;
+        int startY = (int) (size.height * startPercentY);
+        int endY = (int) (size.height * endPercentY);
+        PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+        Sequence swipe = new Sequence(finger, 1);
+        // 1. Posicionar el dedo en el punto inicial
+        swipe.addAction(finger.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), centerX, startY));
+        // 2. Presionar la pantalla
+        swipe.addAction(finger.createPointerDown(PointerInput.MouseButton.LEFT.asArg()));
+        // 3. Deslizar hacia el punto final en 600ms
+        swipe.addAction(finger.createPointerMove(Duration.ofMillis(600), PointerInput.Origin.viewport(), centerX, endY));
+        // 4. Levantar el dedo
+        swipe.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
+        androidDriver.perform(Collections.singletonList(swipe));
+    }
 
     /**
      * Hace scroll hacia abajo hasta que el localizador indicado sea visible

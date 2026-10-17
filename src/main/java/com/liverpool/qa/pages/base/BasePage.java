@@ -1,4 +1,4 @@
-package main.java.com.liverpool.qa.pages.base;
+package com.liverpool.qa.pages.base;
 
 import com.liverpool.qa.config.ConfigReader;
 import org.openqa.selenium.*;
@@ -21,7 +21,7 @@ public abstract class BasePage {
 
     protected BasePage(WebDriver driver) {
         this.driver = driver;
-        int explicitTimeout = Integer.parseInt(ConfigReader.get("explicit.wait", "15"));
+        int explicitTimeout = Integer.parseInt(ConfigReader.get("timeout.explicit.seconds", "15"));
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(explicitTimeout));
         this.actions = new Actions(driver);
     }
