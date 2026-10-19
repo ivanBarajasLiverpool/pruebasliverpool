@@ -30,26 +30,62 @@ public abstract class BasePage {
     // 1. WRAPPERS DE SINCRONIZACIÓN EXPLÍCITA (Explicit Waits)
     // =========================================================================
 
-    /**
-     * Espera hasta que el elemento esté presente en el DOM y sea visible en pantalla.
+        /**
+     * Espera hasta que al menos un elemento que coincida con el localizador sea visible
+     * y devuelve la instancia visible (resuelve elementos duplicados mobile/desktop en el DOM).
      */
-    protected WebElement waitForVisibility(By locator) {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
-    }
+        protected WebElement waitForVisibility(By locator) {
+            return wait.until(d -> {
+                for (WebElement el : d.findElements(locator)) {
+                    try {
+                        if (el.isDisplayed()) {
+                            return el;
+                        }
+                    } catch (StaleElementReferenceException ignored) {
+                    }
+                }
+                return null;
+            });
+        }
+    
+        /**
+         * Espera hasta que exista una instancia visible y habilitada del localizador.
+         */
+        protected WebElement waitForClickable(By locator) {
+            return wait.until(d -> {
+                for (WebElement el : d.findElements(locator)) {
+                    try {
+                        if (el.isDisplayed() && el.isEnabled()) {
+                            return el;
+                        }
+                    } catch (StaleElementReferenceException ignored) {
+                    }
+                }
+                return null;
+            });
+        }
 
-    /**
-     * Espera hasta que todos los elementos que coinciden con el localizador sean visibles.
-     */
-    protected List<WebElement> waitForAllVisible(By locator) {
-        return wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(locator));
-    }
-
-    /**
-     * Espera hasta que el elemento sea visible y esté habilitado para recibir clics.
-     */
-    protected WebElement waitForClickable(By locator) {
-        return wait.until(ExpectedConditions.elementToBeClickable(locator));
-    }
+        /**
+         * Espera hasta que existan suficientes elementos visibles y devuelve el que ocupa
+         * la posición zeroBasedIndex (0 = primero en pantalla, 1 = segundo en pantalla, etc.).
+         */
+        protected WebElement waitForVisibleElementAt(By locator, int zeroBasedIndex) {
+            return wait.until(d -> {
+                int visibleIndex = 0;
+                for (WebElement el : d.findElements(locator)) {
+                    try {
+                        if (el.isDisplayed()) {
+                            if (visibleIndex == zeroBasedIndex) {
+                                return el;
+                            }
+                            visibleIndex++;
+                        }
+                    } catch (StaleElementReferenceException ignored) {
+                    }
+                }
+                return null;
+            });
+        }
 
     /**
      * Espera a que un elemento (ej. spinner/loader o modal) desaparezca del DOM o deje de ser visible.
@@ -72,21 +108,78 @@ public abstract class BasePage {
         return wait.until(ExpectedConditions.urlContains(urlFraction));
     }
 
+    /**
+     * Espera a que el elemento exista en el DOM (incluso si tiene opacity: 0 como los inputs de Material UI).
+     */
+    protected WebElement waitForPresence(By locator) {
+        return wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+    }
+
     // =========================================================================
     // 2. ACCIONES BASE REUTILIZABLES 
     // =========================================================================
 
     /**
      * Hace clic seguro esperando primero a que el elemento sea clickeable.
+     * Si un backdrop en transición o header fijo intercepta el clic, centra el elemento y aplica fallback JS.
      */
     protected void click(By locator) {
         try {
-            waitForClickable(locator).click();
+            WebElement element = waitForClickable(locator);
+            scrollIntoViewCenter(element);
+            element.click();
         } catch (ElementClickInterceptedException e) {
-            log.warn("Clic interceptado en {}. Haciendo scroll al centro y reintentando...", locator);
+            log.warn("Clic interceptado en {}. Esperando cierre de posibles modales y reintentando...", locator);
+            dismissActiveBackdropIfPresent();
             WebElement element = waitForVisibility(locator);
             scrollIntoViewCenter(element);
-            waitForClickable(locator).click();
+            try {
+                element.click();
+            } catch (ElementClickInterceptedException ex) {
+                log.warn("Segundo intento interceptado en {}. Ejecutando jsClick de respaldo.", locator);
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+            }
+        }
+    }
+
+    /**
+     * Hace clic en el elemento visible que ocupa la posición zeroBasedIndex (0 = primero, 1 = segundo).
+     */
+    protected void clickAt(By locator, int zeroBasedIndex) {
+        WebElement element = waitForVisibleElementAt(locator, zeroBasedIndex);
+        scrollIntoViewCenter(element);
+        try {
+            element.click();
+        } catch (ElementClickInterceptedException e) {
+            dismissActiveBackdropIfPresent();
+            scrollIntoViewCenter(element);
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+        }
+    }
+
+    /**
+     * Fuerza un clic mediante JavaScript (ideal para inputs radio/checkbox con opacity: 0 en Material UI).
+     */
+    protected void jsClick(By locator) {
+        WebElement element = waitForPresence(locator);
+        scrollIntoViewCenter(element);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+    }
+
+    /**
+     * Si un backdrop de Material UI (MuiBackdrop-root) quedó abierto sobre la página,
+     * envía ESCAPE o hace clic en el botón de cierre del drawer y espera a que desaparezca.
+     */
+    protected void dismissActiveBackdropIfPresent() {
+        By backdropLocator = By.cssSelector("div.MuiBackdrop-root, div.MuiModal-backdrop");
+        try {
+            List<WebElement> backdrops = driver.findElements(backdropLocator);
+            if (!backdrops.isEmpty() && backdrops.get(0).isDisplayed()) {
+                actions.sendKeys(Keys.ESCAPE).perform();
+                new WebDriverWait(driver, Duration.ofSeconds(4))
+                        .until(ExpectedConditions.invisibilityOfElementLocated(backdropLocator));
+            }
+        } catch (Exception ignored) {
         }
     }
 

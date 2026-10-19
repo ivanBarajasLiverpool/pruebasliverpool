@@ -7,6 +7,9 @@ import io.qameta.allure.Step;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.IHookCallBack;
+import org.testng.IHookable;
+import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -14,24 +17,29 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
 @Listeners(TestListener.class)
-public abstract class BaseTest {
+public abstract class BaseTest implements IHookable {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
+    private final TestListener testListener = new TestListener();
 
-    /**
-     * Devuelve la instancia activa del WebDriver (ChromeDriver o AndroidDriver) para el hilo actual.
-     */
     protected WebDriver getDriver() {
         return DriverManager.getDriver();
     }
 
     /**
-     * Se ejecuta antes de cada método @Test.
-     * Determina si debe levantar Selenium (Web) o Appium (Android) según:
-     * 1. El parámetro <parameter name="platform" .../> de testng.xml
-     * 2. La variable de consola -Dexecution.platform=...
-     * 3. El valor por defecto en config.properties
+     * Intercepta la ejecución del @Test mientras el contexto de Allure sigue abierto.
+     * Si el test lanza excepción o falla un Assert, adjunta el screenshot inmediatamente.
      */
+    @Override
+    public void run(IHookCallBack callBack, ITestResult testResult) {
+        callBack.runTestMethod(testResult);
+        if (testResult.getThrowable() != null && getDriver() != null) {
+            String testName = testResult.getMethod().getMethodName();
+            testListener.attachScreenshotToAllure(testName, getDriver());
+            testListener.attachExecutionContext(getDriver());
+        }
+    }
+
     @BeforeMethod(alwaysRun = true)
     @Parameters({"platform", "browser"})
     public void setUp(@Optional String platform, @Optional String browser) {
@@ -63,9 +71,6 @@ public abstract class BaseTest {
         getDriver().get(baseUrl);
     }
 
-    /**
-     * Se ejecuta después de cada método @Test (incluso si falló, después de que TestListener tomó la captura).
-     */
     @AfterMethod(alwaysRun = true)
     @Step("Cerrar sesión del driver y liberar recursos")
     public void tearDown() {
