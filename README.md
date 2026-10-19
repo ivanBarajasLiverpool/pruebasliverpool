@@ -127,11 +127,7 @@ appium.new.command.timeout=60
 * **`noReset=true` y limpieza preventiva:** Permite conservar los permisos y omitir el onboarding inicial en cada corrida. Además, `PocketHomePage` incluye el método `cleanBagIfNotEmpty()`, que revisa si quedaron artículos en la bolsa de una ejecución previa y los elimina antes de iniciar el flujo para no alterar el cálculo del Total con IVA.
 
 ### Scripts rápidos para levantar el entorno móvil
-<<<<<<< Updated upstream
-En la raíz del repositorio se incluyen dos scripts para facilitar el arranque en Linux:
-=======
 En la raíz del repositorio se incluyen dos scripts para facilitar el arranque en Linux/Mac:
->>>>>>> Stashed changes
 ```bash
 # 1. Levanta el emulador Android con parámetros optimizados de RAM y espera a sys.boot_completed=1
 ./levanta-emulador.sh
