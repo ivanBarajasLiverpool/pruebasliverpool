@@ -92,7 +92,7 @@ public final class DriverManager {
                 .setAutomationName(ConfigReader.get("appium.automation.name", "UiAutomator2"))
                 .setDeviceName(ConfigReader.get("appium.device.name", "emulator-5554"))
                 .setAppPackage(ConfigReader.get("appium.app.package", "mx.com.liverpool.shoppingapp"))
-                .setAppActivity(ConfigReader.get("appium.app.activity", "mx.com.liverpool.shoppingapp.SplashActivity"))
+                .setAppActivity(ConfigReader.get("appium.app.activity", "mx.com.liverpool.shoppingapp.icon.AppIcon"))
                 .setAppWaitActivity(ConfigReader.get("appium.app.wait.activity", "*"))
                 .setNoReset(Boolean.parseBoolean(ConfigReader.get("appium.no.reset", "true")))
                 .setAutoGrantPermissions(Boolean.parseBoolean(ConfigReader.get("appium.auto.grant.permissions", "true")))
