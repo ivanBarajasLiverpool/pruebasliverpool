@@ -6,8 +6,10 @@ import org.openqa.selenium.WebDriver;
 
 public class PocketProductListPage extends BaseMobilePage {
 
-    private final By plpComposeContainer = By.id("mx.com.liverpool.shoppingapp:id/plpResultsLayoutCompose");
-    private final By productCardImages   = By.xpath("//android.view.View[@content-desc='Product Image']");
+    private final By plpComposeContainer   = By.id("mx.com.liverpool.shoppingapp:id/plpResultsLayoutCompose");
+    private final By productCardImages     = By.xpath("//android.view.View[@content-desc='Product Image']");
+    // Seleccionamos preferentemente un equipo Samsung Galaxy (elegible para garantía extendida Liverpool Care en la app)
+    private final By preferredCellphoneCard = By.xpath("//android.widget.TextView[contains(@text, 'Galaxy') or contains(@text, 'SAMSUNG')]/parent::android.view.View[@clickable='true']");
 
     public PocketProductListPage(WebDriver driver) {
         super(driver);
@@ -21,8 +23,12 @@ public class PocketProductListPage extends BaseMobilePage {
         return new PocketProductDetailPage(driver);
     }
 
-    @Step("Seleccionar celular de preferencia del catálogo (segundo producto con cobertura Liverpool Care)")
+    @Step("Seleccionar celular de preferencia del catálogo con cobertura de garantía Liverpool Care")
     public PocketProductDetailPage selectPreferredCellphone() {
-        return selectProductByPosition(2);
+        waitForVisibility(plpComposeContainer);
+        waitForVisibility(productCardImages);
+        scrollDownUntilVisible(preferredCellphoneCard, 3);
+        click(preferredCellphoneCard);
+        return new PocketProductDetailPage(driver);
     }
 }

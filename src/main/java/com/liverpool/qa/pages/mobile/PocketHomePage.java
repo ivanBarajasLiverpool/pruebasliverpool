@@ -3,11 +3,15 @@ package com.liverpool.qa.pages.mobile;
 import io.qameta.allure.Step;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
 
 public class PocketHomePage extends BaseMobilePage {
 
     // --- Selectores Barra Inferior y Header (Liverpool Pocket Android) ---
     private final By explorarTab               = By.xpath("//*[@content-desc='Explorar' or @text='Explorar']");
+    private final By headerBackBtn             = By.id("mx.com.liverpool.shoppingapp:id/btn_header_back");
     private final By headerBagBtn              = By.id("mx.com.liverpool.shoppingapp:id/btn_header_bag");
     private final By headerBagBadge            = By.id("mx.com.liverpool.shoppingapp:id/badge");
 
@@ -22,16 +26,32 @@ public class PocketHomePage extends BaseMobilePage {
         super(driver);
     }
 
+    /**
+     * Espera a que termine el Splash inicial (hasta 35s en emulador) y asegura que la barra inferior ('Explorar') esté visible.
+     */
+    private void ensureOnMainNavigationScreen() {
+        new WebDriverWait(driver, Duration.ofSeconds(35)).until(d ->
+                isVisibleNow(explorarTab) || isVisibleNow(headerBackBtn)
+        );
+        int backAttempts = 0;
+        while (!isVisibleNow(explorarTab) && isVisibleNow(headerBackBtn) && backAttempts < 5) {
+            log.info("Regresando a la pantalla principal desde vista interna...");
+            click(headerBackBtn);
+            backAttempts++;
+        }
+        waitForVisibility(explorarTab);
+    }
+
     @Step("Limpiar bolsa previamente si existen artículos residuales de ejecuciones anteriores")
     public PocketHomePage cleanBagIfNotEmpty() {
-        waitForVisibility(explorarTab);
+        ensureOnMainNavigationScreen();
         if (isVisibleNow(headerBagBadge)) {
             log.info("Se detectaron artículos previos en la bolsa. Limpiando bolsa antes de iniciar el flujo...");
             click(headerBagBtn);
             PocketCartPage cartPage = new PocketCartPage(driver);
             cartPage.emptyBag();
             navigateBackAndroid();
-            waitForVisibility(explorarTab);
+            ensureOnMainNavigationScreen();
         }
         return this;
     }

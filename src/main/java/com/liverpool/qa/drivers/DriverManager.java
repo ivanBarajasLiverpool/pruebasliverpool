@@ -96,6 +96,8 @@ public final class DriverManager {
                 .setAppWaitActivity(ConfigReader.get("appium.app.wait.activity", "*"))
                 .setNoReset(Boolean.parseBoolean(ConfigReader.get("appium.no.reset", "true")))
                 .setAutoGrantPermissions(Boolean.parseBoolean(ConfigReader.get("appium.auto.grant.permissions", "true")))
+                .setAdbExecTimeout(Duration.ofSeconds(60))
+                .setAppWaitDuration(Duration.ofSeconds(45))
                 .setNewCommandTimeout(Duration.ofSeconds(
                         Integer.parseInt(ConfigReader.get("appium.new.command.timeout", "60"))
                 ));
