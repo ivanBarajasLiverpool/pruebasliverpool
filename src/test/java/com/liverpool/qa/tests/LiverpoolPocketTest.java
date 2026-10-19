@@ -10,6 +10,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+import com.liverpool.qa.config.ConfigReader;
+import io.appium.java_client.android.AndroidDriver;
 
 import java.math.BigDecimal;
 
@@ -21,9 +23,13 @@ public class LiverpoolPocketTest extends BaseTest {
     @Parameters({"platform", "browser"})
     @Override
     public void setUp(@Optional String platform, @Optional String browser) {
-        // Garantiza que al ejecutar LiverpoolPocketTest de forma individual o por suite use plataforma 'android'
         String mobilePlatform = (platform != null && !platform.isBlank()) ? platform : "android";
         super.setUp(mobilePlatform, browser);
+        AndroidDriver androidDriver = (AndroidDriver) getDriver();
+        // Levanta la aplicación de Liverpool Pocket al frente al iniciar la prueba
+        String appPackage = ConfigReader.get("appium.app.package", "mx.com.liverpool.shoppingapp");
+        androidDriver.terminateApp(appPackage);
+        ((AndroidDriver) getDriver()).activateApp(appPackage);
     }
 
     @Test(description = "Certificar compra de Celular con garantía extra en Liverpool Pocket Android y validar Total con IVA")
