@@ -99,7 +99,7 @@ public abstract class BaseMobilePage extends BasePage {
      * Hace scroll hacia abajo hasta que el localizador indicado sea visible
      * o se alcance el número máximo de intentos de swipe.
      */
-    protected WebElement scrollDownUntilVisible(By locator, int maxSwipes) {
+    protected WebElement scrollDownUntilVisible1(By locator, int maxSwipes) {
         for (int i = 0; i < maxSwipes; i++) {
             if (isVisibleNow(locator)) {
                 return waitForVisibility(locator);
@@ -176,6 +176,7 @@ public abstract class BaseMobilePage extends BasePage {
     }
 
     /**
+     * 
      * Presiona el botón 'Atrás' de Android.
      */
     protected void navigateBackAndroid() {
