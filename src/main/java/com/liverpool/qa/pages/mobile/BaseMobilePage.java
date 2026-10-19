@@ -74,18 +74,81 @@ public abstract class BaseMobilePage extends BasePage {
     }
 
     /**
+     * Verifica rápidamente (hasta 1.5 segundos) si el elemento ya es visible en pantalla tras una transición o swipe.
+     */
+    protected boolean isVisibleNow(By locator) {
+        try {
+            return new org.openqa.selenium.support.ui.WebDriverWait(androidDriver, Duration.ofMillis(1500))
+                    .until(d -> {
+                        for (WebElement el : d.findElements(locator)) {
+                            try {
+                                if (el.isDisplayed()) {
+                                    return true;
+                                }
+                            } catch (Exception ignored) {
+                            }
+                        }
+                        return null;
+                    });
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Hace scroll hacia abajo hasta que el localizador indicado sea visible
      * o se alcance el número máximo de intentos de swipe.
      */
     protected WebElement scrollDownUntilVisible(By locator, int maxSwipes) {
         for (int i = 0; i < maxSwipes; i++) {
-            if (isDisplayed(locator)) {
+            if (isVisibleNow(locator)) {
                 return waitForVisibility(locator);
             }
-            log.info("Elemento {} aún no visible, ejecutando swipe {}/{}...", locator, i + 1, maxSwipes);
-            swipeVertical(0.75, 0.30);
+            log.info("Elemento {} aún no visible, ejecutando swipe hacia abajo {}/{}...", locator, i + 1, maxSwipes);
+            swipeVertical(0.78, 0.28);
         }
         return waitForVisibility(locator);
+    }
+
+    /**
+     * Hace scroll hacia arriba hasta que el localizador indicado sea visible.
+     */
+    protected WebElement scrollUpUntilVisible(By locator, int maxSwipes) {
+        for (int i = 0; i < maxSwipes; i++) {
+            if (isVisibleNow(locator)) {
+                return waitForVisibility(locator);
+            }
+            log.info("Elemento {} aún no visible arriba, ejecutando swipe hacia arriba {}/{}...", locator, i + 1, maxSwipes);
+            swipeVertical(0.30, 0.78);
+        }
+        return waitForVisibility(locator);
+    }
+
+    /**
+     * Hace clic en el elemento visible que ocupa la posición zeroBasedIndex (0 = primero, 1 = segundo).
+     */
+    protected void clickAt(By locator, int zeroBasedIndex) {
+        WebElement target = wait.until(d -> {
+            int visibleIdx = 0;
+            for (WebElement el : d.findElements(locator)) {
+                try {
+                    if (el.isDisplayed()) {
+                        if (visibleIdx == zeroBasedIndex) {
+                            return el;
+                        }
+                        visibleIdx++;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+            return null;
+        });
+        target.click();
+    }
+
+    @Override
+    protected void scrollIntoViewCenter(WebElement element) {
+        // En contexto nativo Android (UiAutomator2) no se ejecuta window.scrollIntoView de JS
     }
 
     // =========================================================================
@@ -113,6 +176,7 @@ public abstract class BaseMobilePage extends BasePage {
     }
 
     /**
+     * 
      * Presiona el botón 'Atrás' de Android.
      */
     protected void navigateBackAndroid() {

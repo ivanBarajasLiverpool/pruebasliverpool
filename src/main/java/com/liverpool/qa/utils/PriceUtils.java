@@ -9,7 +9,7 @@ public final class PriceUtils {
     }
 
     /**
-     * Convierte un texto de precio como "$27,699.00" o "$10,040.89" a BigDecimal exacto.
+     * Convierte un texto de precio como "$10,535.15" o "$8,499.15" a BigDecimal exacto.
      */
     public static BigDecimal parsePrice(String rawPrice) {
         if (rawPrice == null || rawPrice.isBlank()) {
