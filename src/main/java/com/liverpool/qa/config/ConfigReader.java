@@ -2,7 +2,6 @@ package com.liverpool.qa.config;
 
 import java.util.Properties;
 import java.io.InputStream;
-import java.util.Properties;
 
 
 /**

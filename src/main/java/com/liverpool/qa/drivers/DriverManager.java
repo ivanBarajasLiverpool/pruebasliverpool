@@ -8,7 +8,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,16 +50,40 @@ public final class DriverManager {
 
         log.info("Inicializando WebDriver para navegador: {}", targetBrowser);
 
+        boolean maximize = Boolean.parseBoolean(ConfigReader.get("browser.maximize", "true"));
+        boolean headless = Boolean.parseBoolean(ConfigReader.get("browser.headless", "false"));
+
         WebDriver driver = switch (targetBrowser) {
-            case "firefox" -> new FirefoxDriver();
-            case "edge" -> new EdgeDriver();
+            case "firefox" -> {
+                FirefoxOptions firefoxOptions = new FirefoxOptions();
+                firefoxOptions.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+                if (headless) {
+                    firefoxOptions.addArguments("-headless");
+                }
+                WebDriver ffDriver = new FirefoxDriver(firefoxOptions);
+                if (maximize) {
+                    ffDriver.manage().window().maximize();
+                }
+                yield ffDriver;
+            }
+            case "edge" -> {
+                EdgeOptions edgeOptions = new EdgeOptions();
+                edgeOptions.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+                if (maximize) {
+                    edgeOptions.addArguments("--start-maximized");
+                }
+                if (headless) {
+                    edgeOptions.addArguments("--headless=new");
+                }
+                yield new EdgeDriver(edgeOptions);
+            }
             default -> {
                 ChromeOptions options = new ChromeOptions();
                 options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
-                if (Boolean.parseBoolean(ConfigReader.get("browser.maximize", "true"))) {
+                if (maximize) {
                     options.addArguments("--start-maximized");
                 }
-                if (Boolean.parseBoolean(ConfigReader.get("browser.headless", "false"))) {
+                if (headless) {
                     options.addArguments("--headless=new");
                 }
                 options.addArguments("--disable-notifications");

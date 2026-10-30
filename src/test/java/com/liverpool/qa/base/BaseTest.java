@@ -52,9 +52,12 @@ public abstract class BaseTest implements IHookable {
         if (targetPlatform.equalsIgnoreCase("android")) {
             startMobileSession();
         } else {
-            String targetBrowser = (browser != null && !browser.isBlank())
-                    ? browser.trim()
-                    : ConfigReader.get("browser.name", "chrome").trim();
+            String cliBrowser = System.getProperty("browser", System.getProperty("browser.name"));
+            String targetBrowser = (cliBrowser != null && !cliBrowser.isBlank())
+                    ? cliBrowser.trim()
+                    : (browser != null && !browser.isBlank())
+                            ? browser.trim()
+                            : ConfigReader.get("browser.name", "chrome").trim();
             String baseUrl = ConfigReader.get("url.liverpool", "https://www.liverpool.com.mx/tienda/home");
             startWebSession(targetBrowser, baseUrl);
         }
